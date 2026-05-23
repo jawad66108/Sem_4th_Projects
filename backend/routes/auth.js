@@ -1,34 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
 const { getConnection } = require("../db/connection");
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // POST /api/auth/google
 router.post("/google", async (req, res) => {
-  const { token } = req.body;
+  const { token, email, name } = req.body;
 
-  if (!token) {
+  if (!token || !email) {
     return res.status(400).json({
       status: "error",
-      message: "No token provided",
+      message: "No token or email provided",
     });
   }
 
   try {
-    // Step 1: Verify the Google token is real
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    // Step 1: Verify token is real by asking Google
+    const googleRes = await axios.get(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
 
-    const payload = ticket.getPayload();
-    const googleEmail = payload.email;
-    const googleName = payload.name;
+    const verifiedEmail = googleRes.data.email;
 
-    // Step 2: Check if this email exists in our Oracle DB
+    // Step 2: Make sure the token email matches what was sent
+    if (verifiedEmail.toLowerCase() !== email.toLowerCase()) {
+      return res.status(401).json({
+        status: "error",
+        message: "Token verification failed",
+      });
+    }
+
+    // Step 3: Look up this email in Oracle
     let connection;
     try {
       connection = await getConnection();
@@ -37,21 +41,21 @@ router.post("/google", async (req, res) => {
                  FROM users u
                  JOIN roles r ON u.role_id = r.role_id
                  WHERE LOWER(u.email) = LOWER(:email)`,
-        { email: googleEmail },
+        { email: verifiedEmail },
       );
 
-      // Step 3: Email not found in database
+      // Step 4: Email not in our database
       if (result.rows.length === 0) {
         return res.status(403).json({
           status: "error",
           message:
-            "Access denied. Your Google account is not registered in Rankify Pro.",
+            "Access denied. Your account is not registered in Rankify Pro.",
         });
       }
 
       const user = result.rows[0];
 
-      // Step 4: Create a JWT token with user info
+      // Step 5: Create JWT
       const jwtToken = jwt.sign(
         {
           user_id: user.USER_ID,
@@ -63,7 +67,7 @@ router.post("/google", async (req, res) => {
         { expiresIn: "8h" },
       );
 
-      // Step 5: Send back the token and user info
+      // Step 6: Send back success
       res.json({
         status: "success",
         token: jwtToken,
@@ -81,7 +85,7 @@ router.post("/google", async (req, res) => {
     console.error("Auth error:", err.message);
     res.status(401).json({
       status: "error",
-      message: "Invalid Google token",
+      message: "Google verification failed",
     });
   }
 });
