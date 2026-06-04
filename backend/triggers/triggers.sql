@@ -98,3 +98,21 @@ BEGIN
     WHERE project_id = :NEW.project_id;
 END;
 /
+
+CREATE OR REPLACE TRIGGER trg_auto_score_project
+BEFORE INSERT ON projects
+FOR EACH ROW
+DECLARE
+    v_ai NUMBER(5,2);
+BEGIN
+    v_ai := calculate_ai_score_local(
+                :NEW.title,
+                :NEW.description,
+                :NEW.github_link,
+                :NEW.report_file
+            );
+
+    :NEW.ai_score    := v_ai;
+    :NEW.final_score := v_ai;
+END;
+/

@@ -7,6 +7,7 @@ function LoginButton() {
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
+        // First get user info from Google
         const userInfo = await axios.get(
           "https://www.googleapis.com/oauth2/v3/userinfo",
           {
@@ -14,19 +15,16 @@ function LoginButton() {
           },
         );
 
-        const googleEmail = userInfo.data.email;
-        const googleName = userInfo.data.name;
-
+        // Then send to our backend
         const res = await axios.post("http://localhost:5000/api/auth/google", {
           token: tokenResponse.access_token,
-          email: googleEmail,
-          name: googleName,
+          email: userInfo.data.email,
+          name: userInfo.data.name,
         });
 
         if (res.data.status === "success") {
           localStorage.setItem("rankify_token", res.data.token);
           localStorage.setItem("rankify_user", JSON.stringify(res.data.user));
-
           const role = res.data.user.role.toLowerCase();
           if (role === "admin") window.location.href = "/admin/dashboard";
           else if (role === "faculty")
@@ -37,29 +35,21 @@ function LoginButton() {
         }
       } catch (err) {
         console.error("Login error:", err);
-        const msg = err.response?.data?.message || "Login failed. Try again.";
-        alert("❌ " + msg);
+        alert(
+          "❌ " + (err.response?.data?.message || "Login failed. Try again."),
+        );
       }
     },
     onError: (err) => {
       console.error("Google OAuth error:", err);
       alert("❌ Google Sign-In failed. Try again.");
     },
-    // ✅ FIX 1: Force account selection every time (prevents silent failure after logout)
     prompt: "select_account",
-    // ✅ FIX 2: Use popup flow explicitly
     flow: "implicit",
   });
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // ✅ FIX 3: Small timeout prevents popup blocker on some browsers
-    login();
-  };
-
   return (
-    <button style={styles.googleBtn} onClick={handleLogin}>
+    <button style={styles.googleBtn} onClick={() => login()}>
       <GoogleIcon />
       <span>Continue with Google</span>
     </button>
@@ -278,13 +268,12 @@ const styles = {
     borderRadius: 2,
     margin: "28px 0",
   },
-  loginSection: { display: "flex", flexDirection: "column", gap: 16 },
-  chooseLabel: {
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: 4,
-    color: "rgba(0,0,0,0.5)",
-    margin: 0,
+  loginSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+    position: "relative", // ← add this
+    zIndex: 10, // ← add this
   },
   googleBtn: {
     display: "flex",
@@ -303,6 +292,8 @@ const styles = {
     letterSpacing: 0.3,
     boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
     transition: "all 0.2s ease",
+    position: "relative", // ← add this
+    zIndex: 10, // ← add this
   },
   note: {
     fontSize: 14,

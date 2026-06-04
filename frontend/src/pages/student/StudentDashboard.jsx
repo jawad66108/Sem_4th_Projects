@@ -152,7 +152,22 @@ export default function StudentDashboard() {
       const all = studRes.data.data;
       const rank = all.findIndex((s) => s.FULL_NAME === user.full_name) + 1;
       const me = all.find((s) => s.FULL_NAME === user.full_name);
-      if (me) setStudent({ ...me, rank, total: all.length });
+      if (me) {
+        // Fetch latest SGPA separately from CGPA_RECORDS
+        let sgpaVal = null;
+        try {
+          const gpaRes = await axios.get(
+            `http://localhost:5000/api/students/my/gpa/${me.STUDENT_ID}`,
+            { headers },
+          );
+          if (gpaRes.data.data) {
+            sgpaVal = gpaRes.data.data.SGPA;
+          }
+        } catch (e) {
+          console.error("SGPA fetch failed", e);
+        }
+        setStudent({ ...me, rank, total: all.length, SGPA: sgpaVal });
+      }
       const dean = deanRes.data.data.find(
         (d) => d.FULL_NAME === user.full_name,
       );
@@ -171,7 +186,7 @@ export default function StudentDashboard() {
 
   /* ── Computed values from real data ── */
   const cgpa = student?.CGPA || 0;
-  const sgpa = student?.CGPA || 0; // use CGPA as SGPA until sgpa_records wired
+  const sgpa = student?.SGPA ?? cgpa; // real SGPA from CGPA_RECORDS, fallback to CGPA
   const rank = student?.rank || "—";
   const total = student?.total || 0;
   const percentile =

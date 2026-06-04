@@ -6,8 +6,8 @@ const RED = "#C0395A";
 const BLACK = "#111111";
 const WHITE = "#FFFFFF";
 
-const BATCHES = ["BSCS-4", "BSSE-4", "BSCS-3"];
-const SEMESTERS = ["Fall-2025", "Spring-2026"];
+const BATCHES = []; // will be loaded from DB
+const SEMESTERS = []; // will be loaded from DB
 
 const rankColors = {
   1: { bg: "#FFD700", text: "#111" },
@@ -125,14 +125,41 @@ const IconTrophy = () => (
 
 /* ─── Main Component ─── */
 export default function DeanList({ user }) {
-  const [selBatch, setSelBatch] = useState("BSCS-4");
-  const [selSemester, setSelSemester] = useState("Fall-2025");
+  const [selBatch, setSelBatch] = useState(null);
+  const [selSemester, setSelSemester] = useState(null);
+  const [batches, setBatches] = useState([]);
+  const [semesters, setSemesters] = useState([]);
   const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filtersLoading, setFiltersLoading] = useState(true);
   const [hoveredRow, setHoveredRow] = useState(null);
 
+  // Load batches & semesters from DB on mount
   useEffect(() => {
-    fetchDeanList();
+    const loadFilters = async () => {
+      try {
+        const token = localStorage.getItem("rankify_token");
+        const res = await axios.get(
+          "http://localhost:5000/api/deanlist/filters/options",
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        const b = res.data.batches || [];
+        const s = res.data.semesters || [];
+        setBatches(b);
+        setSemesters(s);
+        if (b.length > 0) setSelBatch(b[0]);
+        if (s.length > 0) setSelSemester(s[0]);
+      } catch (err) {
+        console.error("Filter load failed", err);
+      } finally {
+        setFiltersLoading(false);
+      }
+    };
+    loadFilters();
+  }, []);
+
+  useEffect(() => {
+    if (selBatch && selSemester) fetchDeanList();
   }, [selBatch, selSemester]);
 
   const fetchDeanList = async () => {
@@ -160,6 +187,25 @@ export default function DeanList({ user }) {
       setLoading(false);
     }
   };
+  if (filtersLoading) {
+    return (
+      <div
+        style={{ padding: 40, fontSize: 18, color: "#aaa", fontWeight: 700 }}
+      >
+        Loading filters...
+      </div>
+    );
+  }
+
+  if (!selBatch || !selSemester) {
+    return (
+      <div
+        style={{ padding: 40, fontSize: 16, color: "#aaa", fontWeight: 700 }}
+      >
+        No batch or semester data found in database.
+      </div>
+    );
+  }
 
   return (
     <div style={styles.page}>
@@ -199,14 +245,14 @@ export default function DeanList({ user }) {
           <div style={styles.dropdowns}>
             <Dropdown
               label="BATCH"
-              options={BATCHES}
-              value={selBatch}
+              options={batches}
+              value={selBatch || ""}
               onChange={setSelBatch}
             />
             <Dropdown
               label="SEMESTER"
-              options={SEMESTERS}
-              value={selSemester}
+              options={semesters}
+              value={selSemester || ""}
               onChange={setSelSemester}
             />
           </div>
