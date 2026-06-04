@@ -7,7 +7,6 @@ function LoginButton() {
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        // Get user info from Google using the access token
         const userInfo = await axios.get(
           "https://www.googleapis.com/oauth2/v3/userinfo",
           {
@@ -18,7 +17,6 @@ function LoginButton() {
         const googleEmail = userInfo.data.email;
         const googleName = userInfo.data.name;
 
-        // Send to our backend
         const res = await axios.post("http://localhost:5000/api/auth/google", {
           token: tokenResponse.access_token,
           email: googleEmail,
@@ -26,26 +24,42 @@ function LoginButton() {
         });
 
         if (res.data.status === "success") {
-          // Save JWT and user info to localStorage
           localStorage.setItem("rankify_token", res.data.token);
           localStorage.setItem("rankify_user", JSON.stringify(res.data.user));
 
-          // Redirect based on role
           const role = res.data.user.role.toLowerCase();
           if (role === "admin") window.location.href = "/admin/dashboard";
-          if (role === "faculty") window.location.href = "/faculty/dashboard";
-          if (role === "student") window.location.href = "/student/dashboard";
+          else if (role === "faculty")
+            window.location.href = "/faculty/dashboard";
+          else if (role === "student")
+            window.location.href = "/student/dashboard";
+          else alert("❌ Unknown role. Contact admin.");
         }
       } catch (err) {
+        console.error("Login error:", err);
         const msg = err.response?.data?.message || "Login failed. Try again.";
         alert("❌ " + msg);
       }
     },
-    onError: () => alert("❌ Google Sign-In failed. Try again."),
+    onError: (err) => {
+      console.error("Google OAuth error:", err);
+      alert("❌ Google Sign-In failed. Try again.");
+    },
+    // ✅ FIX 1: Force account selection every time (prevents silent failure after logout)
+    prompt: "select_account",
+    // ✅ FIX 2: Use popup flow explicitly
+    flow: "implicit",
   });
 
+  const handleLogin = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // ✅ FIX 3: Small timeout prevents popup blocker on some browsers
+    login();
+  };
+
   return (
-    <button style={styles.googleBtn} onClick={() => login()}>
+    <button style={styles.googleBtn} onClick={handleLogin}>
       <GoogleIcon />
       <span>Continue with Google</span>
     </button>
@@ -54,21 +68,34 @@ function LoginButton() {
 
 // ─── Main Login Component ─────────────────────────────────
 export default function Login() {
-  // If already logged in, redirect immediately
   useEffect(() => {
+    // ✅ FIX 4: Clear stale/corrupted auth state on login page load
     const user = localStorage.getItem("rankify_user");
     if (user) {
-      const role = JSON.parse(user).role.toLowerCase();
-      if (role === "admin") window.location.href = "/admin/dashboard";
-      if (role === "faculty") window.location.href = "/faculty/dashboard";
-      if (role === "student") window.location.href = "/student/dashboard";
+      try {
+        const parsed = JSON.parse(user);
+        const role = parsed.role?.toLowerCase();
+        if (role === "admin") window.location.href = "/admin/dashboard";
+        else if (role === "faculty")
+          window.location.href = "/faculty/dashboard";
+        else if (role === "student")
+          window.location.href = "/student/dashboard";
+        else {
+          // Bad/corrupt data — clear it so login button works
+          localStorage.removeItem("rankify_user");
+          localStorage.removeItem("rankify_token");
+        }
+      } catch {
+        // Corrupt JSON — clear it
+        localStorage.removeItem("rankify_user");
+        localStorage.removeItem("rankify_token");
+      }
     }
   }, []);
 
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <div style={styles.page}>
-        {/* Watermark */}
         <div style={styles.watermark}>RANKIFY</div>
 
         {/* LEFT PANEL */}
@@ -87,9 +114,7 @@ export default function Login() {
 
           <div style={styles.loginSection}>
             <p style={styles.chooseLabel}>SIGN IN TO CONTINUE</p>
-
             <LoginButton />
-
             <p style={styles.note}>
               Only registered university accounts are allowed. Contact your
               admin if you cannot log in.
@@ -103,7 +128,6 @@ export default function Login() {
         <div style={styles.right}>
           <div style={styles.podiumWrapper}>
             <div style={styles.podium}>
-              {/* 2nd place */}
               <div style={styles.placeCol}>
                 <div style={styles.medalSilver}>
                   <span style={styles.medalNum}>2</span>
@@ -112,7 +136,6 @@ export default function Login() {
                   <span style={styles.blockNum}>2</span>
                 </div>
               </div>
-              {/* 1st place */}
               <div style={styles.placeCol}>
                 <div style={styles.medalGold}>
                   <span style={styles.medalNum}>1</span>
@@ -121,7 +144,6 @@ export default function Login() {
                   <span style={styles.blockNum}>1</span>
                 </div>
               </div>
-              {/* 3rd place */}
               <div style={styles.placeCol}>
                 <div style={styles.medalBronze}>
                   <span style={styles.medalNum}>3</span>
@@ -256,11 +278,7 @@ const styles = {
     borderRadius: 2,
     margin: "28px 0",
   },
-  loginSection: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 16,
-  },
+  loginSection: { display: "flex", flexDirection: "column", gap: 16 },
   chooseLabel: {
     fontSize: 11,
     fontWeight: 700,

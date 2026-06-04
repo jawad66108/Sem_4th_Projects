@@ -5,9 +5,7 @@ const YELLOW = "#F5C400";
 const RED = "#C8293A";
 const BLACK = "#111111";
 const WHITE = "#FFFFFF";
-
-const BATCHES = ["BSCS-4", "BSSE-4", "BSCS-3"];
-const BATCH_IDS = { "BSCS-4": 1, "BSSE-4": 2, "BSCS-3": 3 };
+const GREEN = "#16a34a";
 
 /* ─── Icons ─── */
 const IconChart = () => (
@@ -135,12 +133,42 @@ const IconAI = () => (
     <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
   </svg>
 );
+const IconUpload = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="16 16 12 12 8 16" />
+    <line x1="12" y1="12" x2="12" y2="21" />
+    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+  </svg>
+);
+const IconClock = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
 
-/* ─── Small Dropdown ─── */
+/* ─── Dropdown ─── */
 function Dropdown({ label, options, value, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -148,7 +176,6 @@ function Dropdown({ label, options, value, onChange }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button style={styles.dropBtn} onClick={() => setOpen(!open)}>
@@ -182,14 +209,17 @@ function Dropdown({ label, options, value, onChange }) {
   );
 }
 
-/* ─── Project Card ─── */
+/* ─── Project Card (Review tab) — now shows strengths & weaknesses ─── */
 function ProjectCard({ project, rank }) {
+  console.log("PROJECT DATA:", project);
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   const rankColors = { 1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32" };
   const rankColor = rankColors[rank] || RED;
   const isTop3 = rank <= 3;
+
+  const handleExpand = () => setExpanded(!expanded);
 
   return (
     <div
@@ -202,7 +232,6 @@ function ProjectCard({ project, rank }) {
       onMouseLeave={() => setHovered(false)}
     >
       <div style={styles.cardTop}>
-        {/* Rank */}
         <div
           style={{
             ...styles.rankBadge,
@@ -218,87 +247,105 @@ function ProjectCard({ project, rank }) {
           )}
           #{rank}
         </div>
-
-        {/* Title + meta */}
         <div style={{ flex: 1 }}>
-          <h3 style={styles.cardTitle}>{project.title}</h3>
+          <h3 style={styles.cardTitle}>{project.TITLE}</h3>
           <div style={styles.cardMeta}>
-            <span style={styles.sectionChip}>{project.section}</span>
+            <span style={styles.sectionChip}>{project.SECTION_NAME}</span>
             <span
               style={{
                 ...styles.statusChip,
                 background:
-                  project.status === "APPROVED"
+                  project.STATUS === "APPROVED"
                     ? "rgba(34,197,94,0.15)"
                     : "rgba(245,196,0,0.2)",
-                color: project.status === "APPROVED" ? "#16a34a" : "#92600a",
-                border: `1.5px solid ${project.status === "APPROVED" ? "#16a34a44" : "#F5C40044"}`,
+                color: project.STATUS === "APPROVED" ? "#16a34a" : "#92600a",
+                border: `1.5px solid ${project.STATUS === "APPROVED" ? "#16a34a44" : "#F5C40044"}`,
               }}
             >
-              {project.status}
+              {project.STATUS}
             </span>
           </div>
         </div>
-
-        {/* Score */}
         <div style={styles.scoreBox}>
-          <span style={styles.scoreVal}>{project.score || "—"}</span>
+          <span style={styles.scoreVal}>
+            {project.FINAL_SCORE ?? project.AI_SCORE ?? "—"}
+          </span>
           <span style={styles.scoreLabel}>Score</span>
         </div>
-
-        {/* Toggle */}
         <button
           style={{
             ...styles.descBtn,
             ...(expanded ? styles.descBtnActive : {}),
           }}
-          onClick={() => setExpanded(!expanded)}
+          onClick={handleExpand}
         >
-          {expanded ? "Close" : "Description"}
+          {expanded ? "Close" : "Details"}
           <span style={{ marginLeft: 6, display: "inline-flex" }}>
             <IconChevron open={expanded} />
           </span>
         </button>
       </div>
 
-      {/* Expanded */}
       {expanded && (
         <div style={styles.expandedBody}>
           <div style={styles.expandDivider} />
           <div style={styles.expandGrid}>
+            {/* Members */}
             <div style={styles.expandSection}>
               <div style={styles.expandLabel}>
                 <IconUsers />
                 &nbsp; Members
               </div>
               <div style={styles.memberList}>
-                {project.members.map((m, i) => (
-                  <span key={i} style={styles.memberPill}>
-                    {m}
-                  </span>
-                ))}
+                {project.MEMBERS
+                  ? project.MEMBERS.split(",").map((m, i) => (
+                      <span key={i} style={styles.memberPill}>
+                        {m.trim()}
+                      </span>
+                    ))
+                  : "No members listed"}
               </div>
             </div>
+
+            {/* Description */}
             <div style={styles.expandSection}>
               <div style={styles.expandLabel}>📋&nbsp; Description</div>
-              <p style={styles.expandDesc}>{project.description}</p>
+              <p style={styles.expandDesc}>{project.DESCRIPTION}</p>
             </div>
-            {project.github && (
+            {/* GitHub */}
+            {project.GITHUB_LINK && (
               <div style={styles.expandSection}>
                 <div style={styles.expandLabel}>
                   <IconGithub />
                   &nbsp; GitHub Link
                 </div>
                 <a
-                  href={project.github}
+                  href={project.GITHUB_LINK}
                   target="_blank"
                   rel="noreferrer"
                   style={styles.githubLink}
                 >
-                  {project.github}
+                  {project.GITHUB_LINK}
                 </a>
               </div>
             )}
+          </div>
+
+          {/* ── AI Score Section ── */}
+          <div style={styles.aiReviewSection}>
+            <div style={styles.aiReviewHeader}>
+              <IconAI />
+              &nbsp; AI Score
+            </div>
+
+            <div style={styles.reviewScoreBox}>
+              <div style={styles.reviewBigScore}>
+                {project.FINAL_SCORE ?? project.AI_SCORE ?? "—"}
+                <span style={{ fontSize: 16 }}>/100</span>
+              </div>
+
+              <div style={styles.reviewBoxLabel}>Auto-calculated score</div>
+            </div>
           </div>
         </div>
       )}
@@ -307,18 +354,18 @@ function ProjectCard({ project, rank }) {
 }
 
 /* ─── Add Project Form ─── */
-function AddProjectView({ user, onSuccess }) {
+function AddProjectView({ user, batches, batchIds, onSuccess }) {
   const [form, setForm] = useState({
     title: "",
-    batch: "BSCS-4",
+    batch: batches[0] || "",
     members: "",
     description: "",
     github: "",
   });
+  const [file, setFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [aiScore, setAiScore] = useState(null);
-  const [feedback, setFeedback] = useState("");
+  const fileRef = useRef(null);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -341,33 +388,21 @@ function AddProjectView({ user, onSuccess }) {
       const token = localStorage.getItem("rankify_token");
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Submit project
-      await axios.post(
-        "http://localhost:5000/api/projects",
-        {
-          title: form.title,
-          description: `${form.description} | Members: ${form.members} | GitHub: ${form.github}`,
-          student_id: user.user_id,
-          batch_id: BATCH_IDS[form.batch] || 1,
-          section_id: 1,
-          semester: "Spring-2026",
-        },
-        { headers },
-      );
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("description", form.description); // clean description only
+      formData.append("members", form.members); // separate field
+      formData.append("github_link", form.github); // separate field
+      formData.append("student_id", user.student_id || user.user_id);
+      formData.append("batch_id", batchIds[form.batch] || 1);
+      formData.append("section_id", 1);
+      formData.append("semester", "Spring-2026");
+      if (file) formData.append("report_file", file);
 
-      // Get AI score
-      const aiRes = await axios.post(
-        "http://localhost:5000/api/ai/score-project",
-        {
-          title: form.title,
-          description: form.description,
-        },
-        { headers },
-      );
-
-      setAiScore(aiRes.data.score);
-      setFeedback(aiRes.data.feedback);
-      onSuccess({ score: aiRes.data.score, feedback: aiRes.data.feedback });
+      await axios.post("http://localhost:5000/api/projects", formData, {
+        headers,
+      });
+      onSuccess();
     } catch (err) {
       alert(
         "Submission failed: " + (err.response?.data?.message || err.message),
@@ -385,13 +420,12 @@ function AddProjectView({ user, onSuccess }) {
         </span>
         Enter Project Details
       </div>
-
       <div style={styles.formBody}>
         {/* Batch chips */}
         <div style={styles.formRow}>
           <label style={styles.formLabel}>Batch:</label>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {BATCHES.map((b) => (
+            {batches.map((b) => (
               <button
                 key={b}
                 style={{
@@ -474,6 +508,62 @@ function AddProjectView({ user, onSuccess }) {
           />
         </div>
 
+        {/* ✅ PDF Upload */}
+        <div style={styles.formRow}>
+          <label style={styles.formLabel}>
+            Project Report (PDF/DOC){" "}
+            <span style={{ fontWeight: 500, color: "rgba(0,0,0,0.45)" }}>
+              — Optional, for better AI review
+            </span>
+          </label>
+          <div
+            style={styles.uploadArea}
+            onClick={() => fileRef.current?.click()}
+          >
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              style={{ display: "none" }}
+              onChange={(e) => setFile(e.target.files[0])}
+            />
+            <IconUpload />
+            {file ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <span style={{ fontWeight: 800, color: BLACK }}>
+                  📄 {file.name}
+                </span>
+                <span style={{ fontSize: 12, color: "rgba(0,0,0,0.45)" }}>
+                  {(file.size / 1024).toFixed(0)} KB — Click to change
+                </span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <span style={{ fontWeight: 800, color: BLACK }}>
+                  Click to upload PDF or Word document
+                </span>
+                <span style={{ fontSize: 12, color: "rgba(0,0,0,0.45)" }}>
+                  Max 10MB · PDF, DOC, DOCX
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <button
           style={{ ...styles.submitBtn, opacity: loading ? 0.7 : 1 }}
           onClick={handleSubmit}
@@ -481,7 +571,7 @@ function AddProjectView({ user, onSuccess }) {
         >
           {loading ? (
             <>
-              <IconAI /> Submitting & Scoring with AI...
+              <IconAI /> Submitting...
             </>
           ) : (
             <>
@@ -494,26 +584,52 @@ function AddProjectView({ user, onSuccess }) {
   );
 }
 
-/* ─── Success View ─── */
-function SuccessView({ onBack, score, feedback }) {
+/* ─── Pending Approval View (shown after submission) ─── */
+function PendingView({ onBack }) {
   return (
     <div style={styles.successBox}>
-      <div style={styles.successIcon}>
-        <IconCheck />
+      <div style={{ ...styles.successIcon, background: "#FFF3CC" }}>
+        <IconClock />
       </div>
       <h2 style={styles.successTitle}>Project Submitted!</h2>
-      {score && (
-        <div style={styles.aiScoreBox}>
-          <p style={styles.aiScoreLabel}>🤖 AI Score</p>
-          <p style={styles.aiScoreNum}>
-            {score}
-            <span style={{ fontSize: 20 }}>/100</span>
-          </p>
-          {feedback && <p style={styles.aiFeedback}>"{feedback}"</p>}
+      <div style={styles.pendingCard}>
+        <div style={styles.pendingCardIcon}>⏳</div>
+        <div>
+          <div style={styles.pendingCardTitle}>Waiting for Admin Approval</div>
+          <div style={styles.pendingCardSub}>
+            Your project has been received. Once the admin reviews and approves
+            it, Gemini AI will automatically score it and generate a detailed
+            strengths & weaknesses report.
+          </div>
         </div>
-      )}
+      </div>
+      <div style={styles.pendingSteps}>
+        <div style={styles.pendingStep}>
+          <span style={styles.stepDot}>✅</span> Project submitted
+        </div>
+        <div style={styles.pendingStep}>
+          <span
+            style={{
+              ...styles.stepDot,
+              background: "#FFF3CC",
+              color: "#92600a",
+            }}
+          >
+            ⏳
+          </span>{" "}
+          Admin review & approval
+        </div>
+        <div style={styles.pendingStep}>
+          <span
+            style={{ ...styles.stepDot, background: "#f0f0f0", color: "#999" }}
+          >
+            🤖
+          </span>{" "}
+          AI scoring & feedback
+        </div>
+      </div>
       <p style={styles.successSub}>
-        Your project has been added and is pending faculty review.
+        Check the Review Projects tab to see your score once approved.
       </p>
       <button style={styles.submitBtn} onClick={onBack}>
         ← Back to Projects
@@ -528,46 +644,78 @@ export default function ProjectsPage({ user }) {
   const [selBatch, setSelBatch] = useState("BSCS-4");
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [successData, setSuccessData] = useState(null);
+  const [batches, setBatches] = useState([]);
+  const [batchIds, setBatchIds] = useState({});
 
   useEffect(() => {
-    if (view === "review") fetchProjects();
-  }, [selBatch, view]);
+    fetchBatches();
+  }, []);
 
-  const fetchProjects = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (view === "review" && batchIds[selBatch]) {
+      fetchProjects();
+    }
+  }, [selBatch, view, batchIds]);
+
+  const fetchBatches = async () => {
     try {
       const token = localStorage.getItem("rankify_token");
-      const batchId = BATCH_IDS[selBatch];
+
       const res = await axios.get(
-        `http://localhost:5000/api/projects/top/${batchId}`,
-        { headers: { Authorization: `Bearer ${token}` } },
+        "http://localhost:5000/api/projects/batches",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
       );
-      const mapped = (res.data.data || []).map((p, i) => ({
-        id: p.PROJECT_ID,
-        title: p.TITLE,
-        members: [p.FULL_NAME],
-        description: p.DESCRIPTION || "No description provided.",
-        github: "",
-        score: p.FINAL_SCORE || p.AI_SCORE || 0,
-        section: p.SECTION_NAME,
-        status: p.STATUS,
-        rank: i + 1,
-      }));
-      setProjects(mapped);
+
+      const data = res.data.data || [];
+
+      setBatches(data.map((b) => b.BATCH_NAME));
+
+      const ids = {};
+      data.forEach((b) => {
+        ids[b.BATCH_NAME] = b.BATCH_ID;
+      });
+
+      setBatchIds(ids);
+
+      if (data.length > 0) {
+        setSelBatch(data[0].BATCH_NAME);
+      }
     } catch (err) {
       console.error(err);
+    }
+  };
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("rankify_token");
+
+      const batchId = batchIds[selBatch];
+
+      if (!batchId) return;
+
+      const res = await axios.get(
+        `http://localhost:5000/api/projects/top/${batchId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setProjects(res.data.data || []);
+    } catch (err) {
+      console.error("Error fetching projects:", err);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSuccess = (data) => {
-    setSuccessData(data);
-    setView("success");
-  };
-
   return (
+    // ✅ FIX: full width, no maxWidth cutting the sides
     <div style={styles.wrapper}>
       {/* Top action bar */}
       <div style={styles.topBar}>
@@ -584,7 +732,7 @@ export default function ProjectsPage({ user }) {
           <button
             style={{
               ...styles.tabBtn,
-              ...(view === "add" || view === "success"
+              ...(view === "add" || view === "pending"
                 ? styles.tabBtnActive
                 : {}),
             }}
@@ -593,18 +741,17 @@ export default function ProjectsPage({ user }) {
             <IconPlus /> ADD Project
           </button>
         </div>
-
         {view === "review" && (
           <Dropdown
             label="Batch"
-            options={BATCHES}
+            options={batches}
             value={selBatch}
             onChange={setSelBatch}
           />
         )}
       </div>
 
-      {/* ── REVIEW VIEW ── */}
+      {/* Review View */}
       {view === "review" && (
         <div style={styles.reviewSection}>
           <div style={styles.reviewHeader}>
@@ -620,7 +767,6 @@ export default function ProjectsPage({ user }) {
               </span>
             </div>
           </div>
-
           {loading ? (
             <div style={styles.emptyState}>Loading projects...</div>
           ) : projects.length === 0 ? (
@@ -629,42 +775,35 @@ export default function ProjectsPage({ user }) {
             </div>
           ) : (
             <div style={styles.cardList}>
-              {projects.map((p) => (
-                <ProjectCard key={p.id} project={p} rank={p.rank} />
+              {projects.map((p, index) => (
+                <ProjectCard key={p.PROJECT_ID} project={p} rank={index + 1} />
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ── ADD VIEW ── */}
+      {/* Add View */}
       {view === "add" && (
-        <AddProjectView user={user} onSuccess={handleSuccess} />
-      )}
-
-      {/* ── SUCCESS VIEW ── */}
-      {view === "success" && (
-        <SuccessView
-          onBack={() => setView("review")}
-          score={successData?.score}
-          feedback={successData?.feedback}
+        <AddProjectView
+          user={user}
+          batches={batches}
+          batchIds={batchIds}
+          onSuccess={() => setView("pending")}
         />
       )}
+
+      {/* Pending Approval View */}
+      {view === "pending" && <PendingView onBack={() => setView("review")} />}
     </div>
   );
 }
 
 /* ─── Styles ─── */
 const styles = {
-  wrapper: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 24,
-    maxWidth: 860,
-    width: "100%",
-  },
+  // ✅ FIX: removed maxWidth:860 — now fills full content area
+  wrapper: { display: "flex", flexDirection: "column", gap: 24, width: "100%" },
 
-  /* TOP BAR */
   topBar: {
     display: "flex",
     alignItems: "center",
@@ -697,7 +836,6 @@ const styles = {
     boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
   },
 
-  /* DROPDOWN */
   dropBtn: {
     display: "flex",
     alignItems: "center",
@@ -755,7 +893,6 @@ const styles = {
   },
   dropOptActive: { background: "rgba(245,196,0,0.15)" },
 
-  /* REVIEW */
   reviewSection: { display: "flex", flexDirection: "column", gap: 18, flex: 1 },
   reviewHeader: {
     display: "flex",
@@ -788,7 +925,6 @@ const styles = {
     letterSpacing: 0.5,
   },
 
-  /* CARDS */
   cardList: { display: "flex", flexDirection: "column", gap: 14 },
   card: {
     background: YELLOW,
@@ -886,7 +1022,6 @@ const styles = {
   },
   descBtnActive: { background: BLACK },
 
-  /* EXPANDED */
   expandedBody: { marginTop: 16 },
   expandDivider: {
     height: 2,
@@ -943,12 +1078,105 @@ const styles = {
     wordBreak: "break-all",
   },
 
-  /* ADD FORM */
+  // ── AI Review Styles ──
+  aiReviewSection: {
+    marginTop: 20,
+    borderTop: "2px solid rgba(0,0,0,0.1)",
+    paddingTop: 18,
+  },
+  aiReviewHeader: {
+    display: "flex",
+    alignItems: "center",
+    fontSize: 12,
+    fontWeight: 800,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 14,
+  },
+  reviewLoading: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "rgba(0,0,0,0.4)",
+    fontStyle: "italic",
+  },
+  reviewGrid: { display: "flex", gap: 14, flexWrap: "wrap" },
+  strengthBox: {
+    flex: 2,
+    minWidth: 220,
+    background: "rgba(34,197,94,0.12)",
+    border: "1.5px solid rgba(34,197,94,0.3)",
+    borderRadius: 14,
+    padding: "16px 18px",
+  },
+  weaknessBox: {
+    flex: 2,
+    minWidth: 220,
+    background: "rgba(239,68,68,0.08)",
+    border: "1.5px solid rgba(239,68,68,0.25)",
+    borderRadius: 14,
+    padding: "16px 18px",
+  },
+  reviewScoreBox: {
+    flex: 1,
+    minWidth: 120,
+    background: "rgba(0,0,0,0.08)",
+    borderRadius: 14,
+    padding: "16px 18px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+  },
+  reviewBoxLabel: {
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 8,
+  },
+  reviewBoxText: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: BLACK,
+    margin: 0,
+    lineHeight: 1.65,
+  },
+  reviewBigScore: {
+    fontSize: 44,
+    fontWeight: 900,
+    color: BLACK,
+    lineHeight: 1,
+    fontFamily: "'Barlow Condensed', Arial, sans-serif",
+  },
+  reviewDate: {
+    fontSize: 10,
+    color: "rgba(0,0,0,0.4)",
+    marginTop: 6,
+    fontWeight: 600,
+  },
+  pendingReview: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    fontSize: 14,
+    fontWeight: 700,
+    color: "rgba(0,0,0,0.4)",
+    fontStyle: "italic",
+    background: "rgba(0,0,0,0.06)",
+    padding: "12px 18px",
+    borderRadius: 10,
+  },
+
+  // ── Add Form ──
   addForm: {
     background: YELLOW,
     borderRadius: 24,
     overflow: "hidden",
     boxShadow: "0 6px 28px rgba(245,196,0,0.35)",
+    width: "100%",
     maxWidth: 700,
   },
   formHeader: {
@@ -1018,6 +1246,22 @@ const styles = {
     color: YELLOW,
     border: "2px solid " + BLACK,
   },
+
+  // ── Upload Area ──
+  uploadArea: {
+    border: "2px dashed rgba(0,0,0,0.25)",
+    borderRadius: 14,
+    padding: "24px 20px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 10,
+    cursor: "pointer",
+    background: "rgba(255,255,255,0.5)",
+    transition: "all 0.18s",
+    textAlign: "center",
+  },
+
   submitBtn: {
     display: "flex",
     alignItems: "center",
@@ -1038,13 +1282,13 @@ const styles = {
     alignSelf: "flex-start",
   },
 
-  /* SUCCESS */
+  // ── Pending/Success ──
   successBox: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: 16,
+    gap: 20,
     flex: 1,
     textAlign: "center",
     padding: "60px 0",
@@ -1073,37 +1317,59 @@ const styles = {
     fontWeight: 600,
     color: "rgba(0,0,0,0.45)",
     margin: 0,
-    maxWidth: 360,
+    maxWidth: 400,
   },
-  aiScoreBox: {
-    background: YELLOW,
-    borderRadius: 20,
-    padding: "24px 40px",
-    textAlign: "center",
-    boxShadow: "0 6px 24px rgba(245,196,0,0.4)",
+
+  pendingCard: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 16,
+    background: "#FFF3CC",
+    border: "2px solid #F5C400",
+    borderRadius: 18,
+    padding: "20px 24px",
+    maxWidth: 480,
+    textAlign: "left",
   },
-  aiScoreLabel: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: "rgba(0,0,0,0.5)",
-    margin: "0 0 4px",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  aiScoreNum: {
-    fontSize: 56,
+  pendingCardIcon: { fontSize: 32, flexShrink: 0 },
+  pendingCardTitle: {
+    fontSize: 18,
     fontWeight: 900,
     color: BLACK,
-    margin: 0,
-    lineHeight: 1,
-    fontFamily: "'Barlow Condensed', 'Arial Black', sans-serif",
+    marginBottom: 8,
   },
-  aiFeedback: {
+  pendingCardSub: {
     fontSize: 14,
-    fontStyle: "italic",
+    fontWeight: 600,
     color: "rgba(0,0,0,0.6)",
-    margin: "8px 0 0",
-    maxWidth: 300,
+    lineHeight: 1.6,
+  },
+
+  pendingSteps: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    alignItems: "flex-start",
+  },
+  pendingStep: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    fontSize: 15,
+    fontWeight: 700,
+    color: BLACK,
+  },
+  stepDot: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    background: "rgba(34,197,94,0.15)",
+    color: GREEN,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 14,
+    flexShrink: 0,
   },
 
   emptyState: {

@@ -76,3 +76,25 @@ COMMIT;
 -- Check audit log - should show old and new value automatically
 SELECT * FROM audit_logs;
 
+
+CREATE OR REPLACE TRIGGER trg_auto_score_project
+AFTER INSERT ON projects
+FOR EACH ROW
+DECLARE
+    v_ai    NUMBER(5,2);
+    v_final NUMBER(5,2);
+BEGIN
+    v_ai    := calculate_ai_score_local(
+                   :NEW.title,
+                   :NEW.description,
+                   :NEW.github_link,
+                   :NEW.report_file
+               );
+    v_final := v_ai;
+
+    UPDATE projects
+    SET ai_score    = v_ai,
+        final_score = v_final
+    WHERE project_id = :NEW.project_id;
+END;
+/
