@@ -357,7 +357,7 @@ const styles = {
     borderRadius: 24,
     padding: "28px 32px",
     position: "relative",
-    overflow: "hidden",
+    overflow: "visible",
     flexShrink: 0,
     boxShadow: "0 6px 28px rgba(245,196,0,0.35)",
   },
@@ -481,7 +481,7 @@ const styles = {
     background: WHITE,
     cursor: "pointer",
     fontFamily: "inherit",
-    minWidth: 200,
+    minWidth: 240,
     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
     transition: "all 0.18s ease",
   },
@@ -510,7 +510,8 @@ const styles = {
     border: "2px solid rgba(0,0,0,0.1)",
     boxShadow: "0 8px 28px rgba(0,0,0,0.15)",
     zIndex: 100,
-    overflow: "hidden",
+    overflow: "auto", // ← changed from "hidden" to "auto"
+    maxHeight: 220,
   },
   dropOption: {
     display: "flex",

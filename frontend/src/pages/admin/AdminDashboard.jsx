@@ -687,6 +687,21 @@ export default function AdminDashboard() {
                                       {p.FULL_NAME}
                                     </span>
                                   </div>
+                                  {p.MEMBERS && (
+                                    <div style={styles.memberList}>
+                                      {p.MEMBERS.split(",").map((m, i) => (
+                                        <span
+                                          key={i}
+                                          style={{
+                                            ...styles.memberPill,
+                                            background: "rgba(245,196,0,0.3)",
+                                          }}
+                                        >
+                                          {m.trim()}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                                 <div style={styles.expandCol}>
                                   <span style={styles.expandLabel}>
@@ -748,6 +763,7 @@ const styles = {
   shell: {
     display: "flex",
     minHeight: "100vh",
+    width: "100vw",
     fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif",
     background: WHITE,
     overflow: "hidden",
@@ -932,13 +948,14 @@ const styles = {
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    padding: "36px 32px", // was 40px, slight reduction
+    padding: "36px 32px",
     overflowY: "auto",
     gap: 24,
     background: "#fafafa",
     boxSizing: "border-box",
-    minWidth: 0, // ← ADD THIS — prevents flex overflow
-    width: "100%", // ← ADD THIS
+    minWidth: 0,
+    maxWidth: "calc(100vw - 260px)",
+    overflow: "hidden auto",
   },
 
   pageHeader: {

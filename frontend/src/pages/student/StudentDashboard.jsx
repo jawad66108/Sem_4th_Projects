@@ -678,6 +678,9 @@ const styles = {
     gap: 24,
     background: "#fafafa",
     boxSizing: "border-box",
+    minWidth: 0,
+    maxWidth: "calc(100vw - 280px)",
+    overflow: "hidden auto",
   },
 
   /* Top bar */

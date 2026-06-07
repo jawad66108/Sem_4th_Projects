@@ -44,7 +44,7 @@ router.get("/audit", async (req, res) => {
          old_value, new_value, changed_by,
          TO_CHAR(changed_at, 'DD-Mon-YYYY HH:MI AM') AS changed_at
   FROM audit_logs
-  ORDER BY changed_at DESC
+  ORDER BY log_id DESC
   FETCH FIRST 5 ROWS ONLY
 `,
       [],
@@ -79,7 +79,7 @@ router.get("/pending-projects", async (req, res) => {
       `
   SELECT p.project_id, p.title, p.description,
          p.ai_score, p.final_score, p.status,
-         p.semester,
+         p.semester, p.members, p.github_link,
          u.full_name, b.batch_name, sec.section_name,
          TO_CHAR(p.submitted_at, 'DD-Mon-YYYY HH:MI AM') AS submitted_at
   FROM projects p
@@ -103,6 +103,8 @@ router.get("/pending-projects", async (req, res) => {
         FINAL_SCORE: r.FINAL_SCORE,
         STATUS: r.STATUS,
         SEMESTER: r.SEMESTER,
+        MEMBERS: r.MEMBERS,
+        GITHUB_LINK: r.GITHUB_LINK,
         FULL_NAME: r.FULL_NAME,
         BATCH_NAME: r.BATCH_NAME,
         SECTION_NAME: r.SECTION_NAME,

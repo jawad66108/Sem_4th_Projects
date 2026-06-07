@@ -7,9 +7,8 @@ const WHITE = "#FFFFFF";
 const RED = "#C8293A";
 const GREEN = "#16a34a";
 
-const SEMESTERS = ["Fall-2025", "Spring-2026", "Fall-2026"];
-const BATCHES = ["All", "BSCS-4", "BSSE-4", "BSCS-3"];
-
+const SEMESTERS = [];
+const BATCHES = [];
 const rankColors = { 1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32" };
 
 const IconMedal = () => (
@@ -84,16 +83,37 @@ const api = () => ({
 const BASE = "http://localhost:5000/api";
 
 export default function AdminDeanList() {
-  const [selSemester, setSelSemester] = useState("Fall-2025");
+  const [selSemester, setSelSemester] = useState(null);
   const [selBatch, setSelBatch] = useState("All");
+  const [semesters, setSemesters] = useState([]);
+  const [batches, setBatches] = useState(["All"]);
   const [deanData, setDeanData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filtersLoading, setFiltersLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [hoveredRow, setHoveredRow] = useState(null);
 
   useEffect(() => {
-    fetchDeanList();
+    const loadFilters = async () => {
+      try {
+        const res = await axios.get(`${BASE}/deanlist/filters/options`, api());
+        const s = res.data.semesters || [];
+        const b = res.data.batches || [];
+        setSemesters(s);
+        setBatches(["All", ...b]);
+        if (s.length > 0) setSelSemester(s[0]);
+      } catch (err) {
+        console.error("Filter load failed", err);
+      } finally {
+        setFiltersLoading(false);
+      }
+    };
+    loadFilters();
+  }, []);
+
+  useEffect(() => {
+    if (selSemester) fetchDeanList();
   }, [selSemester]);
 
   const fetchDeanList = async () => {
@@ -225,7 +245,7 @@ export default function AdminDeanList() {
             <div>
               <h2 style={styles.headerCardTitle}>Dean List</h2>
               <p style={styles.headerCardSub}>
-                BATCH {selBatch} · {selSemester.toUpperCase()}
+                BATCH {selBatch} · {selSemester?.toUpperCase()}
               </p>
               <div style={styles.headerBadges}>
                 <span style={styles.minBadge}>Min CGPA 3.5+</span>
@@ -245,7 +265,7 @@ export default function AdminDeanList() {
             <div style={styles.filterGroup}>
               <p style={styles.filterLabel}>SEMESTER</p>
               <div style={styles.chipRow}>
-                {SEMESTERS.map((s) => (
+                {semesters.map((s) => (
                   <button
                     key={s}
                     style={{
@@ -263,7 +283,7 @@ export default function AdminDeanList() {
             <div style={styles.filterGroup}>
               <p style={styles.filterLabel}>BATCH</p>
               <div style={styles.chipRow}>
-                {BATCHES.map((b) => (
+                {batches.map((b) => (
                   <button
                     key={b}
                     style={{
