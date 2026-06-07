@@ -468,19 +468,19 @@ router.get("/all-projects", async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    const result = await connection.execute(`
-      SELECT p.project_id, p.title, p.description,
-             p.ai_score, p.final_score, p.status,
-             p.semester, u.full_name,
-             b.batch_name, sec.section_name,
-             TO_CHAR(p.submitted_at, 'DD-Mon-YYYY') AS submitted_at
-      FROM projects p
-      JOIN students s   ON p.student_id  = s.student_id
-      JOIN users u      ON s.user_id     = u.user_id
-      JOIN batches b    ON p.batch_id    = b.batch_id
-      JOIN sections sec ON p.section_id  = sec.section_id
-      ORDER BY p.submitted_at DESC
-    `);
+    const result = await connection.execute(
+      `SELECT p.project_id, p.title, p.description,
+              p.ai_score, p.final_score, p.status,
+              p.semester, p.members, u.full_name,
+              b.batch_name, sec.section_name,
+              TO_CHAR(p.submitted_at, 'DD-Mon-YYYY') AS submitted_at
+       FROM projects p
+       JOIN students s   ON p.student_id  = s.student_id
+       JOIN users u      ON s.user_id     = u.user_id
+       JOIN batches b    ON p.batch_id    = b.batch_id
+       JOIN sections sec ON p.section_id  = sec.section_id
+       ORDER BY p.submitted_at DESC`,
+    );
     res.json({ status: "success", data: result.rows });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });

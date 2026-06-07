@@ -427,6 +427,33 @@ export default function ProjectManagement() {
                     <div style={styles.expandDivider} />
                     <div style={styles.expandGrid}>
                       <div style={styles.expandCol}>
+                        <span style={styles.expandLabel}>MEMBERS</span>
+                        <div
+                          style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
+                        >
+                          {p.MEMBERS ? (
+                            p.MEMBERS.split(",").map((m, i) => (
+                              <span
+                                key={i}
+                                style={{
+                                  background: "rgba(245,196,0,0.25)",
+                                  border: "1.5px solid #F5C400",
+                                  borderRadius: 50,
+                                  padding: "4px 12px",
+                                  fontSize: 13,
+                                  fontWeight: 800,
+                                  color: BLACK,
+                                }}
+                              >
+                                {m.trim()}
+                              </span>
+                            ))
+                          ) : (
+                            <span style={styles.expandValue}>—</span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={styles.expandCol}>
                         <span style={styles.expandLabel}>DESCRIPTION</span>
                         <p style={styles.expandValue}>
                           {p.DESCRIPTION || "No description provided."}

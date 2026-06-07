@@ -680,13 +680,8 @@ export default function AdminDashboard() {
                               <div style={styles.expandGrid}>
                                 <div style={styles.expandCol}>
                                   <span style={styles.expandLabel}>
-                                    STUDENT
+                                    MEMBERS
                                   </span>
-                                  <div style={styles.memberList}>
-                                    <span style={styles.memberPill}>
-                                      {p.FULL_NAME}
-                                    </span>
-                                  </div>
                                   {p.MEMBERS && (
                                     <div style={styles.memberList}>
                                       {p.MEMBERS.split(",").map((m, i) => (
